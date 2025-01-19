@@ -1,12 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, authentication
 from .models import Task
 from rest_framework.request import Request
 from .serializers import TaskSerializer
 from django.shortcuts import get_object_or_404
 from .filters.posted_filters import filter_by_posted
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class TaskListCreateAPIView(APIView):
 
@@ -14,6 +14,8 @@ class TaskListCreateAPIView(APIView):
         """
         Mostra apenas as tasks que foram postadas.
         """
+
+        authentication_classes = [JWTAuthentication]
         tasks = filter_by_posted(request)
         
         serializer = TaskSerializer(tasks, many=True)
@@ -24,6 +26,7 @@ class TaskListCreateAPIView(APIView):
         )
     
     def post(self, request: Request) -> Response:
+        authentication_classes = [JWTAuthentication]
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -35,6 +38,7 @@ class TaskListCreateAPIView(APIView):
 
 class TaskRetrieveUpdateDestroyAPIView(APIView):
     def get(self, request: Request, id: str) -> Response:
+        authentication_classes = [JWTAuthentication]
         task = get_object_or_404(Task, id=id)
         serializer = TaskSerializer(task)
         return Response(
@@ -43,6 +47,7 @@ class TaskRetrieveUpdateDestroyAPIView(APIView):
         )
 
     def put(self, request: Request, id) -> Response:
+        authentication_classes = [JWTAuthentication]
         task = Task.objects.get(id=id)
         data = request.data
         serializer = TaskSerializer(task, data=data)
@@ -54,6 +59,7 @@ class TaskRetrieveUpdateDestroyAPIView(APIView):
             )
 
     def delete(self, request: Request, id) -> Response:
+        authentication_classes = [JWTAuthentication]
         try:
             task = Task.objects.get(id=id)
             task.delete()
