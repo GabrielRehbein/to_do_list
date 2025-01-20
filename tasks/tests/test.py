@@ -4,10 +4,10 @@ from rest_framework import status
 from tasks.models import Task
 from django.forms.models import model_to_dict
 import json
-
+from django.contrib.auth import get_user_model
 from tasks.serializers import TaskSerializer
 
-
+User = get_user_model()
 class TaskTest(APITestCase):
     def setUp(self):
         self.base_url = reverse('task_list_create')
@@ -20,6 +20,17 @@ class TaskTest(APITestCase):
             **self.mock_task_data
         )
         self.url_with_id = f'{self.base_url}1'
+
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='testpass'
+        )
+        response = self.client.post(reverse('token_obtain_pair'), {
+            'username': 'testuser',
+            'password': 'testpass'
+        })
+        self.token = f"Bearer {response.data['access']}"
 
     def test_status_code_get_task(self):
         response = self.client.get(self.base_url)
@@ -42,9 +53,10 @@ class TaskTest(APITestCase):
         )
        
     def test_status_code_post_task(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
         response = self.client.post(
             self.base_url,
-            data=self.mock_task_data
+            data=self.mock_task_data,
         )
         self.assertEqual(
             response.status_code,
@@ -70,6 +82,7 @@ class TaskTest(APITestCase):
         )
     
     def test_status_code_delete_task(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
         response = self.client.delete(
             self.url_with_id
         )
@@ -79,6 +92,7 @@ class TaskTest(APITestCase):
         )
 
     def test_update_task_status_code(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
         new_data = {
             'title': 'task-updated',
             'description': '',
@@ -94,6 +108,7 @@ class TaskTest(APITestCase):
         )
 
     def test_update_task_title(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
         new_data = {
             'title': 'task-updated',
             'description': '',
